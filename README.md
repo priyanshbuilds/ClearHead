@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 ClearHead
 
-## Getting Started
+> **Your brain is full. Let's sort it.**
 
-First, run the development server:
+ClearHead is a minimal, AI-powered web application designed to help you instantly offload your unstructured thoughts. Dump your thoughts in 60 seconds, and ClearHead automatically organizes them into actionable **Tasks, Ideas, Worries, and Reminders** using AI—so you don't have to.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+![ClearHead Preview](https://github.com/priyanshbuilds/ClearHead/assets/placeholder) <!-- Replace with an actual screenshot later -->
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Instant Brain Dumps**: A distraction-free textarea to get your thoughts out quickly.
+- **AI Auto-Categorization**: Uses Anthropic's Claude to parse your messy text into neat categories:
+  - 📝 **Tasks**: Actionable items with checkboxes.
+  - 💡 **Ideas**: Creative thoughts saved for later.
+  - 💭 **Worries**: Anxieties you need to acknowledge and process.
+  - 📌 **Reminders**: Quick things to remember.
+- **Morning Cards**: An optional daily email sent via Resend that recaps your incomplete tasks so you start your day focused.
+- **Authentication**: Seamless secure login using Email/Password or Google OAuth, powered by Supabase.
+- **Premium Design**: A highly polished, calming dark mode aesthetic with custom gradients and micro-interactions.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Tech Stack
 
-## Learn More
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database & Auth**: [Supabase](https://supabase.com/)
+- **AI Processing**: [Anthropic Claude 3 Haiku](https://www.anthropic.com/)
+- **Email Delivery**: [Resend](https://resend.com/)
 
-To learn more about Next.js, take a look at the following resources:
+## 🏃‍♂️ Getting Started Locally
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/priyanshbuilds/ClearHead.git
+   cd ClearHead/clearhead-app
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. **Set up Environment Variables:**
+   Create a `.env.local` file in the root directory and add your API keys:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   RESEND_API_KEY=your_resend_api_key
+   CRON_SECRET=your_secret_for_cron_jobs
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📦 Deployment
+
+The easiest way to deploy ClearHead is using [Vercel](https://vercel.com).
+Ensure you have added all the environment variables from your `.env.local` file to your Vercel project settings. For the daily morning card emails to work, you can set up a Vercel Cron Job using the `CRON_SECRET` variable.
+
+---
+
+*Built with focus and calm.*
