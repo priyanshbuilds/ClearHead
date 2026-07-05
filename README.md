@@ -4,7 +4,7 @@
 
 ClearHead is a minimal, AI-powered web application designed to help you instantly offload your unstructured thoughts. Dump your thoughts in 60 seconds, and ClearHead automatically organizes them into actionable **Tasks, Ideas, Worries, and Reminders** using AI—so you don't have to.
 
-![ClearHead Preview](https://github.com/priyanshbuilds/ClearHead/assets/placeholder) <!-- Replace with an actual screenshot later -->
+
 
 ## 🚀 Features
 
