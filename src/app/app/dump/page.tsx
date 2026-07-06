@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { processDump } from '../../actions/processDump';
 import { toggleComplete } from '../history/actions';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { motion } from 'motion/react';
 
 type DisplayItem = {
   id: string;
@@ -206,10 +208,13 @@ export default function DumpPage() {
   const activeCategories = ['TASK', 'IDEA', 'WORRY', 'REMINDER'].filter(cat => grouped[cat]?.length > 0);
 
   return (
-    <div style={{ padding: '0 20px', paddingBottom: '100px' }}>
+    <div 
+      className="max-w-4xl mx-auto min-h-[100dvh] bg-[#050508]/40 backdrop-blur-md border-x border-white/[0.02]"
+      style={{ padding: '0 20px', paddingBottom: '100px' }}
+    >
       
       {/* Heading Section */}
-      <div style={{ paddingTop: '60px', textAlign: 'center', marginBottom: '40px' }}>
+      <div style={{ paddingTop: '80px', textAlign: 'center', marginBottom: '40px' }}>
         <h1 className="font-heading" style={{
           fontSize: '36px',
           fontWeight: 800,
@@ -232,7 +237,15 @@ export default function DumpPage() {
       </div>
 
       {/* Input Form */}
-      <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ 
+        maxWidth: '680px', 
+        margin: '0 auto', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '20px',
+        boxShadow: '0 20px 60px rgba(123,110,246,0.08)',
+        borderRadius: '16px'
+      }}>
         <div style={{ position: 'relative' }}>
           <textarea
             value={text}
@@ -362,85 +375,100 @@ export default function DumpPage() {
               return (
                 <div 
                   key={category}
+                  className="relative group/card"
                   style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.07)',
                     borderRadius: '16px',
-                    padding: 0,
-                    overflow: 'hidden',
                     animation: `fadeSlideUp 0.4s ease forwards`,
                     animationDelay: `${index * 0.08}s`,
                     opacity: 0,
                     transform: 'translateY(12px)'
                   }}
                 >
-                  {/* Card Header Strip */}
-                  <div style={{
-                    padding: '12px 18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: styles.headerBg,
-                    borderBottom: `1px solid ${styles.headerBorder}`
-                  }}>
+                  <GlowingEffect
+                    spread={40}
+                    glow={true}
+                    disabled={false}
+                    proximity={64}
+                    inactiveZone={0.01}
+                  />
+                  <div 
+                    className="relative z-10 w-full h-full"
+                    style={{
+                      background: 'rgba(19,18,31,0.8)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      borderRadius: '16px',
+                      padding: 0,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Card Header Strip */}
                     <div style={{
-                      background: styles.badgeBg,
-                      color: styles.badgeColor,
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      padding: '3px 10px',
-                      borderRadius: '20px'
+                      padding: '12px 18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: styles.headerBg,
+                      borderBottom: `1px solid ${styles.headerBorder}`
                     }}>
-                      {category}
-                    </div>
-                  </div>
-
-                  {/* Items List */}
-                  <div>
-                    {items.map((item, itemIndex) => (
-                      <div 
-                        key={item.id}
-                        style={{
-                          padding: '12px 18px',
-                          borderBottom: itemIndex === items.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.04)',
-                          fontSize: '14px',
-                          color: item.category === 'TASK' && item.is_completed ? '#6B6882' : '#C4C2D4',
-                          textDecoration: item.category === 'TASK' && item.is_completed ? 'line-through' : 'none',
-                          lineHeight: 1.55,
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '10px'
-                        }}
-                      >
-                        {item.category === 'TASK' && (
-                          <button
-                            onClick={() => handleToggleComplete(item.id, item.is_completed || false)}
-                            style={{
-                              width: '16px',
-                              height: '16px',
-                              borderRadius: '50%',
-                              border: item.is_completed ? 'none' : '1.5px solid rgba(123,110,246,0.4)',
-                              background: item.is_completed ? '#7B6EF6' : 'transparent',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              flexShrink: 0,
-                              marginTop: '2px' // align with text
-                            }}
-                          >
-                            {item.is_completed && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </button>
-                        )}
-                        <span style={{ flex: 1 }}>{item.text}</span>
+                      <div style={{
+                        background: styles.badgeBg,
+                        color: styles.badgeColor,
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        padding: '3px 10px',
+                        borderRadius: '20px'
+                      }}>
+                        {category}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Items List */}
+                    <div>
+                      {items.map((item, itemIndex) => (
+                        <div 
+                          key={item.id}
+                          style={{
+                            padding: '12px 18px',
+                            borderBottom: itemIndex === items.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                            fontSize: '14px',
+                            color: item.category === 'TASK' && item.is_completed ? '#6B6882' : '#C4C2D4',
+                            textDecoration: item.category === 'TASK' && item.is_completed ? 'line-through' : 'none',
+                            lineHeight: 1.55,
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px'
+                          }}
+                        >
+                          {item.category === 'TASK' && (
+                            <button
+                              onClick={() => handleToggleComplete(item.id, item.is_completed || false)}
+                              style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                border: item.is_completed ? 'none' : '1.5px solid rgba(123,110,246,0.4)',
+                                background: item.is_completed ? '#7B6EF6' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                marginTop: '2px' // align with text
+                              }}
+                            >
+                              {item.is_completed && (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
+                          <span style={{ flex: 1 }}>{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -452,9 +480,13 @@ export default function DumpPage() {
       {/* Empty State */}
       {!isLoading && !error && results.length === 0 && text.length === 0 && (
         <div style={{ paddingTop: '80px', textAlign: 'center' }}>
-          <span style={{ fontSize: '48px', display: 'block', filter: 'drop-shadow(0 0 16px rgba(123,110,246,0.6))' }}>
+          <motion.span 
+            animate={{ y: [-6, 6, -6] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{ fontSize: '48px', display: 'inline-block', filter: 'drop-shadow(0 0 12px rgba(123,110,246,0.9)) drop-shadow(0 0 24px rgba(123,110,246,0.4))' }}
+          >
             🧠
-          </span>
+          </motion.span>
           <h3 className="font-heading" style={{
             fontSize: '20px',
             fontWeight: 600,

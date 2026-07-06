@@ -4,6 +4,9 @@ import { useState, useRef, useEffect, Suspense } from 'react';
 import { login, signup } from './actions';
 import { createClient } from '@/lib/supabase/client';
 import { useSearchParams } from 'next/navigation';
+import { NeuralBackground } from '@/components/ui/neural-background';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { motion } from 'motion/react';
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +33,10 @@ function LoginForm() {
     const formData = new FormData(formRef.current);
     const result = action === 'login' ? await login(formData) : await signup(formData);
 
-    if (result?.error) {
-      setError(result.error);
-    } else if (result?.message) {
-      setMessage(result.message);
+    if (result && 'error' in result) {
+      setError(result.error as string);
+    } else if (result && 'message' in result) {
+      setMessage(result.message as string);
     }
     
     setLoading(false);
@@ -78,7 +81,7 @@ function LoginForm() {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-4 relative z-10">
         <button
           type="button"
           onClick={handleGoogleLogin}
@@ -111,7 +114,7 @@ function LoginForm() {
         </button>
       </div>
 
-      <div className="relative flex items-center py-2">
+      <div className="relative flex items-center py-2 z-10">
         <div className="flex-grow border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}></div>
         <span className="flex-shrink-0 mx-4 text-xs font-medium uppercase" style={{ color: '#8E8BA8' }}>
           Or
@@ -119,7 +122,7 @@ function LoginForm() {
         <div className="flex-grow border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}></div>
       </div>
 
-      <form ref={formRef} className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form ref={formRef} className="space-y-4 relative z-10" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-2">
           <label className="text-sm font-medium" style={{ color: '#C4C2D4' }} htmlFor="email">
             Email
@@ -163,11 +166,7 @@ function LoginForm() {
             type="button"
             onClick={() => handleSubmit('login')}
             disabled={loading}
-            style={{
-              background: 'linear-gradient(135deg, #6C5FE6 0%, #4ECDC4 100%)',
-              color: 'white'
-            }}
-            className="w-full h-11 px-4 text-sm font-bold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B6EF6] focus:ring-offset-2 focus:ring-offset-[#080810] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-[0_0_20px_rgba(108,95,230,0.3)] active:scale-[0.98]"
+            className="w-full h-11 px-4 text-sm font-bold text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B6EF6] focus:ring-offset-2 focus:ring-offset-[#080810] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-[0_0_20px_rgba(108,95,230,0.4)] active:scale-[0.98] bg-gradient-to-br from-[#7B6EF6] to-[#2DD4BF]"
           >
             {loading ? 'Processing...' : 'Sign In'}
           </button>
@@ -192,27 +191,59 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#080810]" style={{
-      backgroundImage: `
-        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(123,110,246,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(45,212,191,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(123,110,246,0.04) 0%, transparent 70%),
-        radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)
-      `,
-      backgroundSize: '100% 100%, 100% 100%, 100% 100%, 28px 28px'
-    }}>
-      <div 
-        className="w-full max-w-sm p-8 space-y-6 rounded-2xl shadow-2xl relative"
-        style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          backdropFilter: 'blur(20px)'
-        }}
-      >
-        <Suspense fallback={<div className="text-center text-sm text-[#8E8BA8]">Loading...</div>}>
-          <LoginForm />
-        </Suspense>
+    <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#050508] relative overflow-hidden text-white selection:bg-app-primary/30">
+      
+      {/* Ambient Neural Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <NeuralBackground 
+          primaryColor="#7B6EF6" 
+          secondaryColor="#2DD4BF" 
+        />
       </div>
+
+      {/* Spotlight Radial Glow behind the card */}
+      <div 
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0"
+        style={{
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(123,110,246,0.15) 0%, rgba(123,110,246,0) 70%)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }}
+      />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-sm relative z-10"
+      >
+        <div className="relative group/card h-full w-full rounded-2xl" style={{ borderRadius: '16px' }}>
+          
+          <GlowingEffect
+            spread={40}
+            glow={true}
+            disabled={false}
+            proximity={64}
+            inactiveZone={0.01}
+          />
+          
+          <div 
+            className="relative z-10 w-full h-full p-8 space-y-6"
+            style={{
+              background: 'rgba(19,18,31,0.85)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '16px'
+            }}
+          >
+            <Suspense fallback={<div className="text-center text-sm text-[#8E8BA8]">Loading...</div>}>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
