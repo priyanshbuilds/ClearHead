@@ -8,7 +8,7 @@ export type NextActionItem = {
   category: 'TASK';
   text: string;
   is_completed: boolean;
-  priority_rank: 'priority' | 'easy_win' | 'optional';
+  priority_rank: 'priority' | 'easy_win' | 'no_rush';
   estimated_minutes?: number;
   usedFallback?: boolean;
 };
@@ -53,7 +53,7 @@ export async function getNextActions(): Promise<{ success: boolean; data?: NextA
   const tasks = (data as any[]).map(item => ({
     id: item.id,
     text: item.text,
-    priority_rank: item.priority_rank as 'priority' | 'easy_win' | 'optional' | null,
+    priority_rank: item.priority_rank as 'priority' | 'easy_win' | 'no_rush' | null,
     estimated_minutes: item.estimated_minutes as number | undefined,
     created_at: new Date(item.created_at).getTime(),
   }));
@@ -68,18 +68,25 @@ export async function getNextActions(): Promise<{ success: boolean; data?: NextA
   const getFullList = (pool: typeof tasks) => {
     // Sort pool by created_at desc (newest first)
     const sortedPool = [...pool].sort((a, b) => b.created_at - a.created_at);
-    const priority = sortedPool.find(t => t.priority_rank === 'priority');
-    const easy_win = sortedPool.find(t => t.priority_rank === 'easy_win' && t.id !== priority?.id);
     
     const result: NextActionItem[] = [];
-    if (priority) result.push({ id: priority.id, category: 'TASK', text: priority.text, is_completed: false, priority_rank: 'priority', estimated_minutes: priority.estimated_minutes });
-    if (easy_win) result.push({ id: easy_win.id, category: 'TASK', text: easy_win.text, is_completed: false, priority_rank: 'easy_win', estimated_minutes: easy_win.estimated_minutes });
     
-    // Everything else is optional
-    sortedPool.forEach(t => {
-      if (t.id !== priority?.id && t.id !== easy_win?.id) {
-        result.push({ id: t.id, category: 'TASK', text: t.text, is_completed: false, priority_rank: 'optional', estimated_minutes: t.estimated_minutes });
-      }
+    // 1. Priority tasks
+    const priorities = sortedPool.filter(t => t.priority_rank === 'priority');
+    priorities.forEach(p => {
+      result.push({ id: p.id, category: 'TASK', text: p.text, is_completed: false, priority_rank: 'priority', estimated_minutes: p.estimated_minutes });
+    });
+    
+    // 2. Easy win tasks
+    const easyWins = sortedPool.filter(t => t.priority_rank === 'easy_win');
+    easyWins.forEach(e => {
+      result.push({ id: e.id, category: 'TASK', text: e.text, is_completed: false, priority_rank: 'easy_win', estimated_minutes: e.estimated_minutes });
+    });
+    
+    // 3. No rush (everything else)
+    const noRush = sortedPool.filter(t => t.priority_rank !== 'priority' && t.priority_rank !== 'easy_win');
+    noRush.forEach(t => {
+      result.push({ id: t.id, category: 'TASK', text: t.text, is_completed: false, priority_rank: 'no_rush', estimated_minutes: t.estimated_minutes });
     });
     
     return result;
@@ -90,7 +97,7 @@ export async function getNextActions(): Promise<{ success: boolean; data?: NextA
     return { success: true, data: getFullList(alreadyRankedTasks) };
   }
 
-  let newRanks: { id: string, priority_rank: 'priority' | 'easy_win' | 'optional' }[] = [];
+  let newRanks: { id: string, priority_rank: 'priority' | 'easy_win' | 'no_rush' }[] = [];
   let usedFallback = false;
 
   const anthropic = new Anthropic({
@@ -100,17 +107,16 @@ export async function getNextActions(): Promise<{ success: boolean; data?: NextA
   const tasksToRank = unrankedTasks.slice(0, 50);
   const promptText = `
 You are an ADHD-aware task prioritizer. I have a list of incomplete tasks.
-Select up to 3 tasks from this list and categorize them exactly as follows:
-- 1 "priority" (most urgent/important, look for deadlines or keywords like "urgent", "asap")
-- 1 "easy_win" (quick, low-effort, low estimated minutes)
-- 1 "optional" (lower priority, can wait)
+Categorize each task exactly as follows:
+- "priority": Genuinely urgent/important. Base this on explicit urgency language ("urgent", "asap", "deadline", "today"), approaching dates, or high impact. Can apply to MULTIPLE tasks.
+- "easy_win": Quick, low-effort tasks, generally under 10 minutes estimated time. Can apply to MULTIPLE tasks.
+- "no_rush": All remaining tasks that are neither urgent nor a quick easy win.
 
-If there are fewer than 3 tasks, just categorize the available ones logically. Ensure you do not use the same rank more than once.
 Output ONLY valid JSON in this format:
 {
   "actions": [
     { "id": "task-id", "priority_rank": "priority" },
-    { "id": "task-id", "priority_rank": "easy_win" }
+    { "id": "task-id", "priority_rank": "no_rush" }
   ]
 }
 
@@ -130,7 +136,7 @@ ${JSON.stringify(tasksToRank.map(t => ({ id: t.id, text: t.text, estimated_minut
     if (response.content[0].type === 'text') {
       const text = response.content[0].text;
       const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleaned) as { actions: { id: string, priority_rank: 'priority' | 'easy_win' | 'optional' }[] };
+      const parsed = JSON.parse(cleaned) as { actions: { id: string, priority_rank: 'priority' | 'easy_win' | 'no_rush' }[] };
       newRanks = parsed.actions;
     } else {
       throw new Error('Unexpected response type from Claude');
@@ -142,27 +148,36 @@ ${JSON.stringify(tasksToRank.map(t => ({ id: t.id, text: t.text, estimated_minut
     // Fallback logic
     const fallbackTasks = [...tasksToRank];
     
-    // Priority: oldest created_at
-    fallbackTasks.sort((a, b) => a.created_at - b.created_at);
-    const priorityTask = fallbackTasks.shift();
-    if (priorityTask) newRanks.push({ id: priorityTask.id, priority_rank: 'priority' });
+    // Priority: any task with urgency keywords OR the single oldest incomplete task if none have urgency keywords
+    const priorityKeywords = ['urgent', 'asap', 'deadline', 'today', 'critical', 'important'];
+    let priorityTasks = fallbackTasks.filter(t => priorityKeywords.some(kw => t.text.toLowerCase().includes(kw)));
+    
+    if (priorityTasks.length === 0 && fallbackTasks.length > 0) {
+      // Find single oldest
+      const sortedByAge = [...fallbackTasks].sort((a, b) => a.created_at - b.created_at);
+      priorityTasks = [sortedByAge[0]];
+    }
 
-    // Easy Win: lowest estimated_minutes
-    fallbackTasks.sort((a, b) => {
-      const aMins = a.estimated_minutes || 9999;
-      const bMins = b.estimated_minutes || 9999;
-      return aMins - bMins;
+    priorityTasks.forEach(pt => {
+      newRanks.push({ id: pt.id, priority_rank: 'priority' });
     });
-    const easyWinTask = fallbackTasks.shift();
-    if (easyWinTask) newRanks.push({ id: easyWinTask.id, priority_rank: 'easy_win' });
 
-    // Optional: any remaining (will be handled below)
+    // Easy Win: lowest estimated_minutes < 10
+    const easyWinTasks = fallbackTasks.filter(t => 
+      !priorityTasks.find(pt => pt.id === t.id) && 
+      t.estimated_minutes !== undefined && 
+      t.estimated_minutes < 10
+    );
+
+    easyWinTasks.forEach(ew => {
+      newRanks.push({ id: ew.id, priority_rank: 'easy_win' });
+    });
   }
 
   // Ensure ALL unranked tasks receive a rank in DB so we don't repeatedly ask Claude
   tasksToRank.forEach(t => {
     if (!newRanks.find(r => r.id === t.id)) {
-      newRanks.push({ id: t.id, priority_rank: 'optional' });
+      newRanks.push({ id: t.id, priority_rank: 'no_rush' });
     }
   });
 

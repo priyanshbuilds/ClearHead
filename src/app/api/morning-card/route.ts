@@ -117,7 +117,7 @@ export async function POST(request: Request) {
                 <!-- Header -->
                 <tr>
                   <td style="padding-bottom: 32px;">
-                    <div style="font-size: 18px; font-weight: bold; color: #7B6EF6;">🧠 ClearHead</div>
+                    <img src="https://clear-head-theta.vercel.app/clearhead-wordmark.svg" width="140" height="auto" alt="ClearHead" style="display: block; border: 0;" />
                   </td>
                 </tr>
                 <!-- Greeting -->

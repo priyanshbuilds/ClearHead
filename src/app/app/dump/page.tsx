@@ -414,11 +414,12 @@ export default function DumpPage() {
           <div style={{ display: 'grid', gap: '10px' }}>
             <AnimatePresence mode="popLayout">
               {nextActions.map((action) => {
-                const rankStyles = {
-                  priority: { border: 'rgba(251,113,133,0.3)', bg: 'rgba(251,113,133,0.05)', dot: '#FB7185', label: 'Priority' },
-                  easy_win: { border: 'rgba(45,212,191,0.3)', bg: 'rgba(45,212,191,0.05)', dot: '#2DD4BF', label: 'Easy Win' },
-                  optional: { border: 'rgba(255,255,255,0.1)', bg: 'rgba(255,255,255,0.02)', dot: '#94A3B8', label: 'Optional' }
-                }[action.priority_rank];
+                const rankConfig = {
+                  priority: { border: 'rgba(239,68,68,0.2)', bg: 'rgba(239,68,68,0.05)', dot: '#EF4444', label: 'Priority' },
+                  easy_win: { border: 'rgba(45,212,191,0.2)', bg: 'rgba(45,212,191,0.05)', dot: '#2DD4BF', label: 'Easy Win' },
+                  no_rush: { border: 'rgba(94,234,212,0.15)', bg: 'rgba(94,234,212,0.05)', dot: '#5EEAD4', label: 'No rush' }
+                };
+                const rankStyles = rankConfig[action.priority_rank as 'priority' | 'easy_win' | 'no_rush'] || rankConfig.no_rush;
                 
                 return (
                   <motion.div
